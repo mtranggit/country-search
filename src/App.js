@@ -1,7 +1,8 @@
 import React from 'react'
+import AutoSuggest from './components/AutoSuggest'
 
 function App() {
-  return <div className="App">Country search app</div>
+  return <AutoSuggest />
 }
 
 export default App

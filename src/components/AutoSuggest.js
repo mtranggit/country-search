@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {BehaviorSubject} from 'rxjs'
+import {writeStorage, useLocalStorage} from '@rehooks/local-storage'
 import {createStyles, withStyles} from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Paper from '@material-ui/core/Paper'
@@ -28,15 +29,17 @@ const subject$ = new BehaviorSubject('')
 
 const AutoSuggest = props => {
   const [value, setValue] = useState('')
+  const [countryCode, setCountryCode] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [countriesSearch, setCountriesSearch] = useState([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [localStorageSearchCountries] = useLocalStorage('mysearchcountries', [])
 
   useEffect(() => {
     const subscription = getSuggestions(subject$).subscribe(
       suggestions => {
-        setSuggestions(suggestions)
+        setSuggestions(suggestions.slice(0, 10))
         setMenuOpen(suggestions.length > 0 ? true : false)
       },
       error => console.error(error),
@@ -57,6 +60,20 @@ const AutoSuggest = props => {
 
   const handleSelect = index => {
     console.log('selecting index ', index)
+    const {name, cioc} = suggestions[index]
+    setCountryCode(cioc)
+
+    // store search selection into local storage
+    let exSearchCountries = []
+    if (localStorageSearchCountries && localStorageSearchCountries.length) {
+      exSearchCountries = localStorageSearchCountries.filter(
+        country => country.cioc !== cioc,
+      )
+    }
+    const newLocalStorageSearchCountries = [{name, cioc}, ...exSearchCountries]
+    console.log({newLocalStorageSearchCountries})
+    writeStorage('mysearchcountries', newLocalStorageSearchCountries)
+    // open the modal dialog
   }
 
   const handleClickAway = () => {
@@ -67,11 +84,14 @@ const AutoSuggest = props => {
     console.log('Show search history')
     // setMenuOpen(prevState => !prevState)
     setMenuOpen(true)
-    setSuggestions([
-      {name: 'Australia', cioc: 'AUS'},
-      {name: 'New Zealand', cioc: 'NZL'},
-      {name: 'United State of America', cioc: 'USA'},
-    ])
+    if (localStorageSearchCountries && localStorageSearchCountries.length) {
+      setSuggestions([...localStorageSearchCountries])
+    }
+    // setSuggestions([
+    //   {name: 'Australia', cioc: 'AUS'},
+    //   {name: 'New Zealand', cioc: 'NZL'},
+    //   {name: 'United State of America', cioc: 'USA'},
+    // ])
   }
 
   const {classes} = props

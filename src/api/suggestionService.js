@@ -12,8 +12,8 @@ import {forkJoin, of} from 'rxjs'
 
 const API_URL = 'https://restcountries.eu/rest/v2'
 
-const getCountryByName = name => `${API_URL}/name/${name}`
-const getCountryByCode = code => `${API_URL}/alpha/${code}`
+const getCountryByNameUrl = name => `${API_URL}/name/${name}`
+const getCountryByCodeUrl = code => `${API_URL}/alpha/${code}`
 
 const transformResults = responses => {
   // console.log(responses)
@@ -25,28 +25,41 @@ const transformResults = responses => {
         if (results.findIndex(r => r.cioc === item.cioc) === -1) {
           return results.push(item)
         }
+        return item
       })
     } else {
       if (results.findIndex(r => r.cioc === res.cioc) === -1) {
         return results.push({...res})
       }
+      return response
     }
   })
   // console.log(results)
   return results
 
   // return [
-  //   {name: 'Australia', code: 'AUS'},
-  //   {name: 'China', code: 'CHI'},
-  //   {name: 'New Zealand', code: 'NZL'},
-  //   {name: 'United State of America', code: 'USA'},
+  //   {name: 'Australia', cioc: 'AUS'},
+  //   {name: 'China', cioc: 'CHI'},
+  //   {name: 'New Zealand', cioc: 'NZL'},
+  //   {name: 'United State of America', cioc: 'USA'},
   // ]
+}
+
+const transformCountryResponse = response => {
+  // console.log(response)
+  if (response) {
+    return response.response
+  }
+  return null
+  // return {
+  //   name: 'Australia',
+  //   icoc: 'AUS',
+  // }
 }
 
 export const getSuggestions = subject => {
   return subject.pipe(
     // prettier-ignore
-    tap(val => console.log(`Before map: ${val}`)),
     debounceTime(500),
     distinctUntilChanged(),
     filter(val => val.length > 2),
@@ -54,11 +67,11 @@ export const getSuggestions = subject => {
     // switchMap(url => ajax(url)),
     switchMap(val =>
       forkJoin(
-        ajax(getCountryByName(val)).pipe(
+        ajax(getCountryByNameUrl(val)).pipe(
           map(res => res),
           catchError(err => of(null)),
         ),
-        ajax(getCountryByCode(val)).pipe(
+        ajax(getCountryByCodeUrl(val)).pipe(
           map(res => res),
           catchError(err => of(null)),
         ),
@@ -66,4 +79,19 @@ export const getSuggestions = subject => {
     ),
     map(transformResults),
   )
+}
+
+export const getCountryByCode = code => {
+  if (code) {
+    const obs$ = ajax(getCountryByCodeUrl(code)).pipe(
+      // prettier-ignore
+      // tap(_ => console.log(code)),
+      map(transformCountryResponse),
+      catchError(error => {
+        console.error('error: ', error)
+        return of(error)
+      }),
+    )
+    return obs$
+  }
 }

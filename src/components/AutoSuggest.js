@@ -7,6 +7,7 @@ import Paper from '@material-ui/core/Paper'
 import MenuItem from '@material-ui/core/MenuItem'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
 import {getSuggestions} from '../api/suggestionService'
+import Dialog from './Dialog'
 
 const styles = theme =>
   createStyles({
@@ -32,7 +33,11 @@ const AutoSuggest = props => {
   const [value, setValue] = useState('')
   const [countryCode, setCountryCode] = useState('')
   const [suggestions, setSuggestions] = useState([])
-  const [countriesSearch, setCountriesSearch] = useState([])
+
+  const [showDialog, setShowDialog] = React.useState(false)
+  const open = () => setShowDialog(true)
+  const close = () => setShowDialog(false)
+
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [localStorageSearchCountries] = useLocalStorage('mysearchcountries', [])
@@ -64,6 +69,7 @@ const AutoSuggest = props => {
     console.log({newLocalStorageSearchCountries})
     writeStorage('mysearchcountries', newLocalStorageSearchCountries)
     // open the modal dialog
+    open()
   }
 
   const handleChange = e => {
@@ -148,6 +154,7 @@ const AutoSuggest = props => {
           </Paper>
         </ClickAwayListener>
       )}
+      <Dialog showDialog={showDialog} closeDialog={close} id={countryCode} />
     </div>
   )
 }

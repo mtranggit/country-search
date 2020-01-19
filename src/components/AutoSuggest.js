@@ -1,9 +1,11 @@
 import React, {useState, useEffect} from 'react'
+import {BehaviorSubject} from 'rxjs'
 import {createStyles, withStyles} from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Paper from '@material-ui/core/Paper'
 import MenuItem from '@material-ui/core/MenuItem'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
+import {getSuggestions} from '../api/suggestionService'
 
 const styles = theme =>
   createStyles({
@@ -21,6 +23,9 @@ const KEY_UP = 38
 const KEY_DOWN = 40
 const KEY_ENTER = 13
 
+// create subject
+const subject$ = new BehaviorSubject('')
+
 const AutoSuggest = props => {
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -28,8 +33,17 @@ const AutoSuggest = props => {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  useEffect(() => {
+    const subscription = getSuggestions(subject$).subscribe(suggestions => {
+      setSuggestions(suggestions)
+      setMenuOpen(suggestions.length > 0 ? true : false)
+    })
+  }, [])
+
   const handleChange = e => {
-    setValue(e.target.value)
+    const {value} = e.target
+    setValue(value)
+    subject$.next(value)
   }
 
   const handleKeyDown = e => {

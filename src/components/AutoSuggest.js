@@ -17,7 +17,6 @@ const styles = theme =>
       gridTemplateColumns: '1fr auto',
       gridGap: 20,
       maxWidth: 800,
-      // border: '1px solid #272727',
     },
   })
 
@@ -66,8 +65,8 @@ const AutoSuggest = props => {
       )
     }
     const newLocalStorageSearchCountries = [{name, cioc}, ...exSearchCountries]
-    console.log({newLocalStorageSearchCountries})
     writeStorage('mysearchcountries', newLocalStorageSearchCountries)
+
     // open the modal dialog
     open()
   }
@@ -113,8 +112,6 @@ const AutoSuggest = props => {
   }
 
   const handleShowHistory = e => {
-    console.log('Show search history')
-    // setMenuOpen(prevState => !prevState)
     setMenuOpen(true)
     if (localStorageSearchCountries && localStorageSearchCountries.length) {
       setSuggestions([...localStorageSearchCountries])

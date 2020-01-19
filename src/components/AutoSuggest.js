@@ -34,10 +34,15 @@ const AutoSuggest = props => {
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    const subscription = getSuggestions(subject$).subscribe(suggestions => {
-      setSuggestions(suggestions)
-      setMenuOpen(suggestions.length > 0 ? true : false)
-    })
+    const subscription = getSuggestions(subject$).subscribe(
+      suggestions => {
+        setSuggestions(suggestions)
+        setMenuOpen(suggestions.length > 0 ? true : false)
+      },
+      error => console.error(error),
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleChange = e => {
@@ -63,9 +68,9 @@ const AutoSuggest = props => {
     // setMenuOpen(prevState => !prevState)
     setMenuOpen(true)
     setSuggestions([
-      {name: 'Australia', code: 'AUS'},
-      {name: 'New Zealand', code: 'NZL'},
-      {name: 'United State of America', code: 'USA'},
+      {name: 'Australia', cioc: 'AUS'},
+      {name: 'New Zealand', cioc: 'NZL'},
+      {name: 'United State of America', cioc: 'USA'},
     ])
   }
 
@@ -87,11 +92,11 @@ const AutoSuggest = props => {
           <Paper>
             {suggestions.map((suggestion, index) => (
               <MenuItem
-                key={`suggestion-${suggestion.code}`}
+                key={`suggestion-${index}`}
                 onClick={() => handleSelect(index)}
                 selected={selectedIndex === index}
               >
-                {`${suggestion.name} - ${suggestion.code}`}
+                {`${suggestion.name} - ${suggestion.cioc}`}
               </MenuItem>
             ))}
           </Paper>

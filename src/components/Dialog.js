@@ -6,7 +6,7 @@ import MuiDialogTitle from '@material-ui/core/DialogTitle'
 import MuiDialogContent from '@material-ui/core/DialogContent'
 import MuiDialogActions from '@material-ui/core/DialogActions'
 import IconButton from '@material-ui/core/IconButton'
-// import CloseIcon from '@material-ui/icons/Close'
+import CloseIcon from '@material-ui/icons/Close'
 import Typography from '@material-ui/core/Typography'
 
 import {getCountryByCode} from '../api/suggestionService'
@@ -35,8 +35,7 @@ const DialogTitle = withStyles(styles)(props => {
           className={classes.closeButton}
           onClick={onClose}
         >
-          {/* <CloseIcon /> */}
-          <span aria-hidden>&times;</span>
+          <CloseIcon />
         </IconButton>
       ) : null}
     </MuiDialogTitle>
@@ -59,14 +58,21 @@ const DialogActions = withStyles(theme => ({
 export default function CustomizedDialogs(props) {
   const {showDialog, closeDialog, id} = props
   const [country, setCountry] = useState(null)
+  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (id) {
       setLoading(true)
+      setError(null)
       const subscription = getCountryByCode(id).subscribe(countryData => {
         console.log(countryData)
-        setCountry(countryData)
+        if (typeof countryData === 'string') {
+          setError(countryData)
+          setCountry(null)
+        } else {
+          setCountry(countryData)
+        }
         setLoading(false)
       })
 
@@ -80,37 +86,40 @@ export default function CustomizedDialogs(props) {
 
   return (
     <div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <Dialog
-          onClose={handleClose}
-          aria-labelledby="customized-dialog-title"
-          open={showDialog}
-        >
-          <DialogTitle id="customized-dialog-title">
-            <img src={country?.flag} alt={country?.name} width="300" />
-          </DialogTitle>
-          <DialogContent dividers>
-            <Typography gutterBottom>Name: {country?.name}</Typography>
-            <Typography gutterBottom>
-              Currency: {country?.currencies[0].name}
-              {` (${country?.currencies[0].code} - ${country?.currencies[0].symbol})`}
-            </Typography>
-            <Typography gutterBottom>
-              Latitude/longitude: {`${country?.latlng.join('/')}`}
-            </Typography>
-            <Typography gutterBottom>
-              Land area: {`${country?.area} km²`}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={handleClose} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
+      <Dialog
+        onClose={handleClose}
+        aria-labelledby="customized-dialog-title"
+        open={showDialog}
+      >
+        <DialogTitle id="customized-dialog-title" onClose={handleClose}>
+          {country ? country.name : 'Not found'}
+        </DialogTitle>
+        <DialogContent dividers>
+          {loading && <p>Loading...</p>}
+          {error && <p>{error}</p>}
+          {!error && country && (
+            <>
+              <img src={country.flag} alt={country.name} width="300" />
+              <Typography gutterBottom>Country name: {country.name}</Typography>
+              <Typography gutterBottom>
+                Currency: {country.currencyName}
+                {` (${country.currencyCode} - ${country.currencySymbol})`}
+              </Typography>
+              <Typography gutterBottom>
+                Latitude/longitude: {`${country.latlng.join('/')}`}
+              </Typography>
+              <Typography gutterBottom>
+                Land area: {`${country.area} km²`}
+              </Typography>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={handleClose} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

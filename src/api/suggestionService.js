@@ -1,5 +1,4 @@
 import {
-  tap,
   map,
   filter,
   switchMap,
@@ -16,7 +15,6 @@ const getCountryByNameUrl = name => `${API_URL}/name/${name}`
 const getCountryByCodeUrl = code => `${API_URL}/alpha/${code}`
 
 const transformResults = responses => {
-  // console.log(responses)
   const results = []
   responses.filter(Boolean).map(response => {
     const res = response.response
@@ -34,27 +32,34 @@ const transformResults = responses => {
       return response
     }
   })
-  // console.log(results)
   return results
-
-  // return [
-  //   {name: 'Australia', cioc: 'AUS'},
-  //   {name: 'China', cioc: 'CHI'},
-  //   {name: 'New Zealand', cioc: 'NZL'},
-  //   {name: 'United State of America', cioc: 'USA'},
-  // ]
 }
 
 const transformCountryResponse = response => {
-  // console.log(response)
+  console.log('response', response)
   if (response) {
-    return response.response
+    const countryData = response.response
+    if (countryData) {
+      // extract country data for displaying in the dialog popup
+      const {name, flag, latlng = [], area, currencies = []} = countryData
+      let currencyName, currencyCode, currencySymbol
+      if (!!currencies) {
+        currencyName = currencies[0].name
+        currencyCode = currencies[0].code
+        currencySymbol = currencies[0].symbol
+      }
+      return {
+        name,
+        flag,
+        latlng,
+        area,
+        currencyName,
+        currencyCode,
+        currencySymbol,
+      }
+    }
   }
   return null
-  // return {
-  //   name: 'Australia',
-  //   icoc: 'AUS',
-  // }
 }
 
 export const getSuggestions = subject => {
@@ -63,8 +68,6 @@ export const getSuggestions = subject => {
     debounceTime(500),
     distinctUntilChanged(),
     filter(val => val.length > 2),
-    // map(getCountryByName),
-    // switchMap(url => ajax(url)),
     switchMap(val =>
       forkJoin(
         ajax(getCountryByNameUrl(val)).pipe(
@@ -84,12 +87,10 @@ export const getSuggestions = subject => {
 export const getCountryByCode = code => {
   if (code) {
     const obs$ = ajax(getCountryByCodeUrl(code)).pipe(
-      // prettier-ignore
-      // tap(_ => console.log(code)),
       map(transformCountryResponse),
       catchError(error => {
-        console.error('error: ', error)
-        return of(error)
+        console.error('Error: ', error)
+        return of('Sorry, country details not found')
       }),
     )
     return obs$

@@ -1,24 +1,19 @@
 import React, {useState, useEffect} from 'react'
 import {BehaviorSubject} from 'rxjs'
 import {writeStorage, useLocalStorage} from '@rehooks/local-storage'
-import {createStyles, withStyles} from '@material-ui/core/styles'
+import {makeStyles} from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Paper from '@material-ui/core/Paper'
-import MenuItem from '@material-ui/core/MenuItem'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
 import {getSuggestions} from '../api/suggestionService'
 import Dialog from './Dialog'
+import ItemList from './ItemList'
 
-const styles = theme =>
-  createStyles({
-    container: {
-      padding: 20,
-      display: 'grid',
-      gridTemplateColumns: '1fr auto',
-      gridGap: 20,
-      maxWidth: 800,
-    },
-  })
+const useStyles = makeStyles(theme => ({
+  container: {
+    backgroundColor: theme.palette.background.paper,
+  },
+}))
 
 const KEY_UP = 38
 const KEY_DOWN = 40
@@ -29,6 +24,7 @@ const INITIAL_INDEX = 0
 const subject$ = new BehaviorSubject('')
 
 const AutoSuggest = props => {
+  const classes = useStyles()
   const [value, setValue] = useState('')
   const [countryCode, setCountryCode] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -52,19 +48,22 @@ const AutoSuggest = props => {
 
     return () => subscription.unsubscribe()
   }, [])
+
   const handleSelect = index => {
-    console.log('selecting index ', index)
     const {name, cioc} = suggestions[index]
     setCountryCode(cioc)
 
     // store search selection into local storage
-    let exSearchCountries = []
+    let filteredSearchCountries = []
     if (localStorageSearchCountries && localStorageSearchCountries.length) {
-      exSearchCountries = localStorageSearchCountries.filter(
+      filteredSearchCountries = localStorageSearchCountries.filter(
         country => country.cioc !== cioc,
       )
     }
-    const newLocalStorageSearchCountries = [{name, cioc}, ...exSearchCountries]
+    const newLocalStorageSearchCountries = [
+      {name, cioc},
+      ...filteredSearchCountries,
+    ]
     writeStorage('mysearchcountries', newLocalStorageSearchCountries)
 
     // open the modal dialog
@@ -111,19 +110,6 @@ const AutoSuggest = props => {
     setMenuOpen(false)
   }
 
-  const handleShowHistory = e => {
-    setMenuOpen(true)
-    if (localStorageSearchCountries && localStorageSearchCountries.length) {
-      setSuggestions([...localStorageSearchCountries])
-    }
-    // setSuggestions([
-    //   {name: 'Australia', cioc: 'AUS'},
-    //   {name: 'New Zealand', cioc: 'NZL'},
-    //   {name: 'United State of America', cioc: 'USA'},
-    // ])
-  }
-
-  const {classes} = props
   const showSuggestions = menuOpen && suggestions.length > 0
 
   return (
@@ -135,19 +121,15 @@ const AutoSuggest = props => {
         onKeyDown={handleKeyDown}
         placeholder="Enter country name or code"
       />
-      <button onClick={handleShowHistory}>My search history</button>
+
       {showSuggestions && (
         <ClickAwayListener onClickAway={handleClickAway}>
           <Paper>
-            {suggestions.map((suggestion, index) => (
-              <MenuItem
-                key={`suggestion-${index}`}
-                onClick={() => handleSelect(index)}
-                selected={selectedIndex === index}
-              >
-                {`${suggestion.name} - ${suggestion.cioc}`}
-              </MenuItem>
-            ))}
+            <ItemList
+              suggestions={suggestions}
+              handleSelect={handleSelect}
+              selectedIndex={selectedIndex}
+            />
           </Paper>
         </ClickAwayListener>
       )}
@@ -156,6 +138,4 @@ const AutoSuggest = props => {
   )
 }
 
-const StyledComponent = withStyles(styles)(AutoSuggest)
-
-export default StyledComponent
+export default AutoSuggest

@@ -36,7 +36,6 @@ const transformResults = responses => {
 }
 
 const transformCountryResponse = response => {
-  console.log('response', response)
   if (response) {
     const countryData = response.response
     if (countryData) {

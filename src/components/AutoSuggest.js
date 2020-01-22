@@ -78,7 +78,6 @@ const AutoSuggest = props => {
 
   // handle selection with keyboard
   const handleKeyDown = e => {
-    // console.log(e.keyCode)
     if (e.keyCode === KEY_ENTER && selectedIndex !== undefined) {
       e.preventDefault()
       handleSelect(selectedIndex)
